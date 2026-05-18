@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pond</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080808;
+            --panel: #0e0e0e;
+            --panel2: #141414;
+            --panel3: #1a1a1a;
+            --border: #1c1c1c;
+            --border2: #282828;
+            --border3: #383838;
+            --text: #b8b8b8;
+            --bright: #e0e0e0;
+            --dim: #444;
+            --dim2: #333;
+            --red: #993333;
+            --red2: #cc4444;
+            --green: #448844;
+            --mono: 'IBM Plex Mono', 'Courier New', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border3);
+        }
+
+        body {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text);
+            background-color: var(--bg);
+            background-image:
+                linear-gradient(rgba(255, 255, 255, .018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px);
+            background-size: 24px 24px;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Topbar ─────────────────────────────────────────────────────────────────── */
+        .topbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border2);
+            padding: 0 16px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .logo {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--bright);
+            white-space: nowrap;
+        }
+
+        .logo-sep {
+            color: var(--dim);
+            font-weight: 300;
+            letter-spacing: 0;
+        }
+
+        .tabs {
+            display: flex;
+        }
+
+        .tab-btn {
+            background: none;
+            border: 1px solid var(--border2);
+            border-right: none;
+            color: var(--dim);
+            font: 11px var(--mono);
+            padding: 4px 11px;
+            cursor: pointer;
+            transition: color .1s, background .1s;
+            letter-spacing: .5px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:last-child {
+            border-right: 1px solid var(--border2);
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: var(--panel2);
+        }
+
+        .tab-btn.active {
+            color: var(--bright);
+            background: var(--panel2);
+            border-color: var(--border3);
+        }
+
+        .topbar-spacer {
+            flex: 1;
+        }
+
+        .topbar-note {
+            font-size: 10px;
+            color: var(--dim);
+            letter-spacing: .5px;
+        }
+
+        /* ── Toolbar ─────────────────────────────────────────────────────────────────── */
+        .toolbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border2);
+            padding: 0 16px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .breadcrumb {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow: hidden;
+            font-size: 12px;
+            color: var(--dim);
+        }
+
+        .bc-root {
+            color: var(--dim);
+            margin-right: 2px;
+        }
+
+        .bc-seg {
+            color: var(--bright);
+            cursor: pointer;
+            padding: 2px 4px;
+            white-space: nowrap;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bc-seg:hover {
+            background: var(--panel2);
+        }
+
+        .bc-seg.tail {
+            color: var(--dim);
+            cursor: default;
+        }
+
+        .bc-sep {
+            color: var(--dim2);
+            margin: 0 1px;
+        }
+
+        .t-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* ── Workspace ───────────────────────────────────────────────────────────────── */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── File pane ───────────────────────────────────────────────────────────────── */
+        .pane-files {
+            flex: 1;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        .pane-files.drag-over {
+            outline: 1px dashed var(--border3);
+            outline-offset: -4px;
+            background: rgba(255, 255, 255, .012);
+        }
+
+        /* ── File table ──────────────────────────────────────────────────────────────── */
+        .ft {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ft th {
+            text-align: left;
+            padding: 5px 14px;
+            font: 500 9px/1 var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dim);
+            border-bottom: 1px solid var(--border2);
+            position: sticky;
+            top: 0;
+            background: var(--panel);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .ft th:hover {
+            color: var(--text);
+        }
+
+        .ft th.sorted {
+            color: var(--bright);
+        }
+
+        .si {
+            margin-left: 4px;
+            opacity: .35;
+        }
+
+        .ft th.sorted .si {
+            opacity: .9;
+        }
+
+        .ft td {
+            padding: 5px 14px;
+            border-bottom: 1px dashed var(--border);
+            line-height: 1.4;
+        }
+
+        .ft tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ft tr:hover td {
+            background: var(--panel2);
+        }
+
+        .ft tr.sel td {
+            background: var(--panel2);
+        }
+
+        .col-n {
+            width: 100%;
+        }
+
+        .col-s {
+            text-align: right;
+            color: var(--dim);
+            min-width: 70px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .col-d {
+            color: var(--dim);
+            min-width: 138px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .col-x {
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .nc {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .nc:hover .nt {
+            color: var(--bright);
+        }
+
+        .ftag {
+            font-size: 9px;
+            color: var(--dim);
+            border: 1px solid var(--border2);
+            padding: 1px 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: .3px;
+        }
+
+        .ftag.dir {
+            color: var(--text);
+            border-color: var(--border3);
+        }
+
+        .nt {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text);
+            font-size: 12px;
+        }
+
+        .db {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: var(--red);
+            cursor: pointer;
+            padding: 1px 5px;
+            font: 11px var(--mono);
+            transition: color .1s;
+        }
+
+        .ft tr:hover .db {
+            opacity: 1;
+        }
+
+        .db:hover {
+            color: var(--red2);
+        }
+
+        /* ── Preview pane ────────────────────────────────────────────────────────────── */
+        .pane-preview {
+            width: 400px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border2);
+            display: flex;
+            flex-direction: column;
+            background: var(--panel);
+            overflow: hidden;
+        }
+
+        .ph {
+            padding: 7px 14px;
+            border-bottom: 1px solid var(--border2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: var(--panel2);
+        }
+
+        .ph-line {
+            font-size: 10px;
+            color: var(--dim);
+            flex-shrink: 0;
+        }
+
+        .pt {
+            flex: 1;
+            font-size: 11px;
+            color: var(--bright);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: .3px;
+        }
+
+        .pa {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .pb {
+            flex: 1;
+            overflow: auto;
+            padding: 14px;
+        }
+
+        .pb img {
+            max-width: 100%;
+            display: block;
+            border: 1px solid var(--border2);
+        }
+
+        .pb pre {
+            font: 11px/1.75 var(--mono);
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text);
+        }
+
+        .pb iframe {
+            width: 100%;
+            min-height: 500px;
+            border: none;
+        }
+
+        .np {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--dim);
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .np .bi {
+            font-size: 32px;
+            opacity: .25;
+        }
+
+        .eta {
+            width: 100%;
+            height: 100%;
+            font: 11px/1.75 var(--mono);
+            border: 1px solid var(--border2);
+            padding: 12px;
+            resize: none;
+            outline: none;
+            color: var(--text);
+            background: var(--bg);
+            transition: border-color .1s;
+        }
+
+        .eta:focus {
+            border-color: var(--border3);
+        }
+
+        .ef {
+            padding: 7px 14px;
+            border-top: 1px solid var(--border2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: var(--panel2);
+        }
+
+        .ss {
+            font-size: 10px;
+            color: var(--green);
+            letter-spacing: .3px;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────────────────────────────── */
+        .btn-p {
+            background: var(--bright);
+            color: #000;
+            border: none;
+            padding: 4px 12px;
+            font: 500 11px var(--mono);
+            cursor: pointer;
+            letter-spacing: .3px;
+            transition: opacity .1s;
+        }
+
+        .btn-p:hover {
+            opacity: .85;
+        }
+
+        .btn-p:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        .btn {
+            background: none;
+            color: var(--dim);
+            border: 1px solid var(--border2);
+            padding: 3px 10px;
+            font: 11px var(--mono);
+            cursor: pointer;
+            transition: color .1s, border-color .1s;
+            white-space: nowrap;
+            letter-spacing: .3px;
+        }
+
+        .btn:hover {
+            color: var(--bright);
+            border-color: var(--border3);
+        }
+
+        .btn-g {
+            background: none;
+            color: var(--dim);
+            border: none;
+            padding: 3px 7px;
+            font: 11px var(--mono);
+            cursor: pointer;
+            transition: color .1s;
+            letter-spacing: .3px;
+        }
+
+        .btn-g:hover {
+            color: var(--bright);
+        }
+
+        /* ── Input ───────────────────────────────────────────────────────────────────── */
+        .fld {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border2);
+            font: 12px var(--mono);
+            outline: none;
+            color: var(--text);
+            background: var(--bg);
+            transition: border-color .1s;
+        }
+
+        .fld:focus {
+            border-color: var(--border3);
+        }
+
+        /* ── Modal ───────────────────────────────────────────────────────────────────── */
+        .ov {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--border2);
+            padding: 22px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .modal-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--bright);
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border2);
+        }
+
+        .modal p {
+            font-size: 11px;
+            color: var(--dim);
+            line-height: 1.6;
+        }
+
+        .mf {
+            display: flex;
+            gap: 7px;
+            justify-content: flex-end;
+        }
+
+        .et {
+            font-size: 10px;
+            color: var(--red2);
+            min-height: 14px;
+            letter-spacing: .3px;
+        }
+
+        /* ── Toast ───────────────────────────────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            background: var(--panel2);
+            color: var(--bright);
+            border: 1px solid var(--border2);
+            padding: 7px 16px;
+            font: 11px var(--mono);
+            transition: transform .15s ease;
+            z-index: 200;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: .3px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.err {
+            border-color: var(--red);
+            color: var(--red2);
+        }
+
+        /* ── Empty / loading ─────────────────────────────────────────────────────────── */
+        .empty {
+            padding: 52px 20px;
+            text-align: center;
+            color: var(--dim);
+            font-size: 11px;
+            line-height: 1.8;
+            letter-spacing: .3px;
+        }
+
+        .empty .ic {
+            font-size: 28px;
+            margin-bottom: 12px;
+            opacity: .25;
+            display: block;
+        }
+
+        .lr td {
+            padding: 32px;
+            text-align: center;
+            color: var(--dim);
+            font-size: 11px;
+            letter-spacing: .3px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="logo">pond<span class="logo-sep">://</span></div>
+        <div class="tabs">
+            <button class="tab-btn active" data-area="vestibule">[vestibule]</button>
+            <button class="tab-btn" data-area="private">[private]</button>
+        </div>
+        <div class="topbar-spacer"></div>
+        <span class="topbar-note" id="hn"></span>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="breadcrumb" id="bc"></div>
+        <div class="t-actions" id="ta" style="display:none">
+            <button class="btn" id="bu">[↑ upload]</button>
+            <button class="btn" id="bm">[+ mkdir]</button>
+        </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+
+        <!-- File list -->
+        <div class="pane-files" id="pf">
+            <table class="ft">
+                <thead>
+                    <tr>
+                        <th class="col-n sorted" data-sort="name">name <span class="si">↑</span></th>
+                        <th class="col-s" data-sort="size">size <span class="si">↕</span></th>
+                        <th class="col-d" data-sort="modified">modified <span class="si">↕</span></th>
+                        <th class="col-x"></th>
+                    </tr>
+                </thead>
+                <tbody id="tb"></tbody>
+            </table>
+        </div>
+
+        <!-- Preview / editor -->
+        <div class="pane-preview" id="pp" style="display:none">
+            <div class="ph">
+                <span class="ph-line">──</span>
+                <span class="pt" id="ptitle"></span>
+                <div class="pa">
+                    <button class="btn" id="bedit" style="display:none">[edit]</button>
+                    <button class="btn" id="bdl">[↓ dl]</button>
+                    <button class="btn-g" id="bclose">[×]</button>
+                </div>
+            </div>
+            <div class="pb" id="pb" style="height:calc(100% - 36px)"></div>
+            <div class="ef" id="ef" style="display:none">
+                <button class="btn-p" id="bsave">save</button>
+                <button class="btn-g" id="bcancel">cancel</button>
+                <span class="ss" id="ss"></span>
+            </div>
+        </div>
+
+    </div><!-- workspace -->
+
+    <!-- Auth modal -->
+    <div class="ov" id="mauth" style="display:none">
+        <div class="modal">
+            <div class="modal-title">// private area</div>
+            <p>enter password to access private files.</p>
+            <input class="fld" type="password" id="apw" placeholder="password" autocomplete="current-password">
+            <div class="mf">
+                <button class="btn-g" id="bac">cancel</button>
+                <button class="btn-p" id="bao">unlock</button>
+            </div>
+            <p class="et" id="aerr"></p>
+        </div>
+    </div>
+
+    <!-- Mkdir modal -->
+    <div class="ov" id="mmkdir" style="display:none">
+        <div class="modal">
+            <div class="modal-title">// new folder</div>
+            <input class="fld" type="text" id="mdn" placeholder="folder name">
+            <div class="mf">
+                <button class="btn-g" id="bmc">cancel</button>
+                <button class="btn-p" id="bmo">create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <input type="file" id="fi" multiple style="display:none">
+
+    <script>
+        // ── State ──────────────────────────────────────────────────────────────────────
+        const S = {
+            area: 'vestibule', path: '/', token: localStorage.getItem('pond_token') || '',
+            entries: [], sort: { by: 'name', asc: true }, sel: null, editing: false, orig: '',
+        };
+
+        // ── Utilities ──────────────────────────────────────────────────────────────────
+        const fmtSize = n => {
+            if (n == null) return '—';
+            if (n < 1024) return n + ' b';
+            if (n < 1048576) return (n / 1024).toFixed(1) + ' kb';
+            if (n < 1073741824) return (n / 1048576).toFixed(1) + ' mb';
+            return (n / 1073741824).toFixed(2) + ' gb';
+        };
+
+        const fmtDate = ts => {
+            const d = new Date(ts * 1000);
+            const yy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+        };
+
+        // returns short extension tag for display
+        const fileTag = (name, isDir) => {
+            if (isDir) return { label: 'dir', dir: true };
+            const e = name.includes('.') ? name.split('.').pop().toLowerCase() : '?';
+            return { label: e.length > 5 ? e.slice(0, 5) : e, dir: false };
+        };
+
+        const TEXT = new Set(['txt', 'md', 'py', 'js', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'scss',
+            'json', 'xml', 'yaml', 'yml', 'toml', 'sh', 'bash', 'zsh', 'fish', 'env', 'gitignore',
+            'csv', 'log', 'cfg', 'conf', 'ini', 'svg', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'rb',
+            'php', 'swift', 'kt', 'r', 'sql', 'lua', 'vim', 'dockerfile', 'rst', 'makefile']);
+        const IMG = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico']);
+        const ext = n => n.includes('.') ? n.split('.').pop().toLowerCase() : '';
+        const isTx = n => TEXT.has(ext(n)) || !n.includes('.');
+        const isIm = n => IMG.has(ext(n));
+        const isPd = n => ext(n) === 'pdf';
+        const isSvg = n => ext(n) === 'svg';
+
+        const aHdr = () => S.token ? { 'Authorization': 'Bearer ' + S.token } : {};
+        const join = (a, b) => (a.replace(/\/$/, '') + '/' + b).replace(/^\/\//, '/');
+        const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // ── Toast ──────────────────────────────────────────────────────────────────────
+        let _tt;
+        function toast(msg, err = false) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show' + (err ? ' err' : '');
+            clearTimeout(_tt);
+            _tt = setTimeout(() => el.className = 'toast', 2800);
+        }
+
+        // ── Navigation ─────────────────────────────────────────────────────────────────
+        async function navigate(p) { S.path = p; S.sel = null; closePreview(); await refresh(); }
+
+        async function refresh() {
+            document.getElementById('tb').innerHTML =
+                '<tr class="lr"><td colspan="4">loading...</td></tr>';
+            renderBC();
+            const r = await fetch(
+                `/api/ls?path=${encodeURIComponent(S.path)}&area=${S.area}`,
+                { headers: aHdr() }
+            );
+            if (r.status === 401) { showAuth(); return; }
+            if (!r.ok) {
+                document.getElementById('tb').innerHTML =
+                    '<tr class="lr"><td colspan="4">error.</td></tr>';
+                return;
+            }
+            S.entries = (await r.json()).entries;
+            renderList();
+        }
+
+        // ── Breadcrumb ─────────────────────────────────────────────────────────────────
+        function renderBC() {
+            const parts = S.path.split('/').filter(Boolean);
+            const areaLabel = S.area === 'private' ? '[private]' : '[vestibule]';
+            let h = `<span class="bc-root">${areaLabel}</span>`;
+            if (parts.length) h += `<span class="bc-sep">/</span>`;
+
+            parts.forEach((p, i) => {
+                const sub = '/' + parts.slice(0, i + 1).join('/');
+                const last = i === parts.length - 1;
+                h += `<span class="bc-seg${last ? ' tail' : ''}"
+      ${!last ? `onclick="navigate('${sub.replace(/'/g, "\\'")}')"` : ''}>${p}</span>`;
+                if (!last) h += `<span class="bc-sep">/</span>`;
+            });
+
+            document.getElementById('bc').innerHTML = h;
+            document.getElementById('ta').style.display = S.area === 'private' ? 'flex' : 'none';
+            document.getElementById('hn').textContent = S.area === 'private' ? '' : 'read-only';
+        }
+
+        // ── File list ──────────────────────────────────────────────────────────────────
+        function renderList() {
+            const rows = [...S.entries].sort((a, b) => {
+                if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+                let va = a[S.sort.by] ?? '', vb = b[S.sort.by] ?? '';
+                if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+                return (S.sort.asc ? 1 : -1) * (va < vb ? -1 : va > vb ? 1 : 0);
+            });
+
+            if (!rows.length) {
+                document.getElementById('tb').innerHTML =
+                    `<tr><td colspan="4"><div class="empty"><span class="ic">∅</span>empty.</div></td></tr>`;
+                return;
+            }
+
+            document.getElementById('tb').innerHTML = rows.map(e => {
+                const fp = join(S.path, e.name);
+                const sfp = fp.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const sn = e.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const sel = S.sel?.name === e.name ? ' sel' : '';
+                const act = e.is_dir ? `navigate('${sfp}')` : `openFile('${sfp}','${sn}')`;
+                const tag = fileTag(e.name, e.is_dir);
+
+                return `<tr class="${sel}">
+      <td class="col-n">
+        <div class="nc" onclick="${act}">
+          <span class="ftag${tag.dir ? ' dir' : ''}">${tag.label}</span>
+          <span class="nt">${e.name}${e.is_dir ? '/' : ''}</span>
+        </div>
+      </td>
+      <td class="col-s">${fmtSize(e.size)}</td>
+      <td class="col-d">${fmtDate(e.modified)}</td>
+      <td class="col-x">${S.area === 'private'
+                        ? `<button class="db" onclick="confirmDelete('${sfp}','${sn}',${e.is_dir})">del</button>`
+                        : ''}</td>
+    </tr>`;
+            }).join('');
+        }
+
+        // ── Sort ───────────────────────────────────────────────────────────────────────
+        function sortBy(col) {
+            S.sort = { by: col, asc: S.sort.by === col ? !S.sort.asc : true };
+            renderList();
+            document.querySelectorAll('.ft th').forEach(th => {
+                const me = th.dataset.sort === col;
+                th.classList.toggle('sorted', me);
+                const si = th.querySelector('.si');
+                if (si) si.textContent = me ? (S.sort.asc ? '↑' : '↓') : '↕';
+            });
+        }
+
+        // ── Preview ────────────────────────────────────────────────────────────────────
+        async function openFile(fp, name) {
+            S.sel = { name, path: fp }; S.editing = false; renderList();
+
+            const pp = document.getElementById('pp');
+            const pb = document.getElementById('pb');
+            const ef = document.getElementById('ef');
+            const be = document.getElementById('bedit');
+
+            pp.style.display = 'flex';
+            document.getElementById('ptitle').textContent = name;
+            pb.innerHTML = '<div class="empty" style="height:100%"><span class="ic">↻</span>loading...</div>';
+            ef.style.display = 'none';
+            pb.style.padding = '14px';
+            document.getElementById('bdl').style.display = '';
+            be.style.display = (S.area === 'private' && isTx(name)) ? '' : 'none';
+
+            const url = `/api/file?path=${encodeURIComponent(fp)}&area=${S.area}`;
+
+            if (isIm(name) || isSvg(name)) {
+                const blob = await fetch(url, { headers: aHdr() }).then(r => r.blob());
+                const obj = URL.createObjectURL(blob);
+                pb.innerHTML = `<img src="${obj}" alt="${name}" onload="URL.revokeObjectURL(this.src)">`;
+
+            } else if (isPd(name)) {
+                const blob = await fetch(url, { headers: aHdr() }).then(r => r.blob());
+                pb.style.padding = '0';
+                pb.innerHTML = `<iframe src="${URL.createObjectURL(blob)}" style="width:100%;height:100%"></iframe>`;
+
+            } else if (isTx(name)) {
+                const r = await fetch(url, { headers: aHdr() });
+                const text = await r.text();
+                S.orig = text;
+                pb.innerHTML = `<pre>${esc(text)}</pre>`;
+
+            } else {
+                pb.innerHTML = `<div class="np">
+      <div class="bi">[?]</div>
+      <div>no preview available</div>
+      <button class="btn" style="margin-top:4px" onclick="downloadFile()">[↓ download]</button>
+    </div>`;
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('pp').style.display = 'none';
+            S.sel = null; S.editing = false;
+        }
+
+        function downloadFile() {
+            if (!S.sel) return;
+            fetch(`/api/file?path=${encodeURIComponent(S.sel.path)}&area=${S.area}`, { headers: aHdr() })
+                .then(r => r.blob())
+                .then(b => Object.assign(document.createElement('a'),
+                    { href: URL.createObjectURL(b), download: S.sel.name }).click());
+        }
+
+        // ── Editor ─────────────────────────────────────────────────────────────────────
+        function startEdit() {
+            S.editing = true;
+            const pb = document.getElementById('pb');
+            const ta = document.createElement('textarea');
+            ta.className = 'eta'; ta.value = S.orig; ta.style.height = '100%';
+            ta.addEventListener('keydown', e => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSave(ta.value); }
+            });
+            pb.innerHTML = ''; pb.appendChild(ta); ta.focus();
+            document.getElementById('ef').style.display = 'flex';
+            document.getElementById('ss').textContent = '';
+            document.getElementById('bedit').style.display = 'none';
+            document.getElementById('bdl').style.display = 'none';
+        }
+
+        async function doSave(content) {
+            const ss = document.getElementById('ss');
+            ss.textContent = 'saving...';
+            const r = await fetch(
+                `/api/file?path=${encodeURIComponent(S.sel.path)}&area=${S.area}`,
+                { method: 'PUT', headers: { ...aHdr(), 'Content-Type': 'text/plain' }, body: content }
+            );
+            if (r.ok) {
+                S.orig = content;
+                ss.textContent = 'saved.';
+                toast('saved.');
+                setTimeout(() => ss.textContent = '', 3000);
+            } else {
+                ss.textContent = 'error.';
+                toast('save failed.', true);
+            }
+        }
+
+        function cancelEdit() {
+            S.editing = false;
+            document.getElementById('ef').style.display = 'none';
+            document.getElementById('bedit').style.display = S.area === 'private' ? '' : 'none';
+            document.getElementById('bdl').style.display = '';
+            document.getElementById('pb').innerHTML = `<pre>${esc(S.orig)}</pre>`;
+        }
+
+        // ── Delete ─────────────────────────────────────────────────────────────────────
+        function confirmDelete(fp, name, isDir) {
+            if (!confirm(`delete "${name}"${isDir ? ' and all contents' : ''}?`)) return;
+            fetch(`/api/file?path=${encodeURIComponent(fp)}&area=${S.area}`,
+                { method: 'DELETE', headers: aHdr() })
+                .then(r => {
+                    if (r.ok) { toast(`deleted ${name}.`); if (S.sel?.name === name) closePreview(); refresh(); }
+                    else toast('delete failed.', true);
+                });
+        }
+
+        // ── Mkdir ──────────────────────────────────────────────────────────────────────
+        function showMkdir() {
+            document.getElementById('mmkdir').style.display = 'flex';
+            const i = document.getElementById('mdn');
+            i.value = ''; setTimeout(() => i.focus(), 30);
+        }
+        function hideMkdir() { document.getElementById('mmkdir').style.display = 'none'; }
+
+        async function doMkdir() {
+            const name = document.getElementById('mdn').value.trim();
+            if (!name) return;
+            const r = await fetch('/api/mkdir', {
+                method: 'POST',
+                headers: { ...aHdr(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ area: S.area, path: join(S.path, name) }),
+            });
+            if (r.ok) { toast(`created ${name}/`); hideMkdir(); refresh(); }
+            else toast('failed.', true);
+        }
+
+        // ── Upload ─────────────────────────────────────────────────────────────────────
+        async function uploadFiles(list) {
+            const fd = new FormData();
+            for (const f of list) fd.append('files', f);
+            fd.append('path', S.path); fd.append('area', S.area);
+            const r = await fetch('/api/upload', { method: 'POST', headers: aHdr(), body: fd });
+            if (r.ok) {
+                const d = await r.json();
+                toast(`uploaded ${d.saved.length} file${d.saved.length !== 1 ? 's' : ''}.`);
+                refresh();
+            } else toast('upload failed.', true);
+        }
+
+        // ── Auth ───────────────────────────────────────────────────────────────────────
+        function showAuth() {
+            document.getElementById('mauth').style.display = 'flex';
+            document.getElementById('apw').value = '';
+            document.getElementById('aerr').textContent = '';
+            setTimeout(() => document.getElementById('apw').focus(), 30);
+        }
+
+        function hideAuth() {
+            document.getElementById('mauth').style.display = 'none';
+            if (S.area === 'private') switchArea('vestibule', true);
+        }
+
+        async function doAuth() {
+            const pw = document.getElementById('apw').value;
+            const btn = document.getElementById('bao');
+            btn.disabled = true; btn.textContent = 'checking...';
+            const r = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw }),
+            });
+            btn.disabled = false; btn.textContent = 'unlock';
+            if (r.ok) {
+                S.token = (await r.json()).token;
+                localStorage.setItem('pond_token', S.token);
+                document.getElementById('mauth').style.display = 'none';
+                refresh();
+            } else {
+                document.getElementById('aerr').textContent = 'incorrect password.';
+            }
+        }
+
+        // ── Area switch ────────────────────────────────────────────────────────────────
+        async function switchArea(area, skipRefresh = false) {
+            if (area === S.area && !skipRefresh) return;
+            S.area = area; S.path = '/'; S.sel = null; closePreview();
+            document.querySelectorAll('.tab-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.area === area));
+            if (area === 'private' && !S.token) { showAuth(); return; }
+            if (!skipRefresh) await refresh();
+        }
+
+        // ── Drag & drop ────────────────────────────────────────────────────────────────
+        function setupDnD() {
+            const pf = document.getElementById('pf');
+            pf.addEventListener('dragover', e => {
+                if (S.area !== 'private') return;
+                e.preventDefault(); pf.classList.add('drag-over');
+            });
+            pf.addEventListener('dragleave', e => {
+                if (!pf.contains(e.relatedTarget)) pf.classList.remove('drag-over');
+            });
+            pf.addEventListener('drop', async e => {
+                e.preventDefault(); pf.classList.remove('drag-over');
+                if (S.area !== 'private') { toast('vestibule is read-only.', true); return; }
+                if (e.dataTransfer.files.length) await uploadFiles(e.dataTransfer.files);
+            });
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('bu').onclick = () => document.getElementById('fi').click();
+            document.getElementById('bm').onclick = showMkdir;
+            document.getElementById('bclose').onclick = closePreview;
+            document.getElementById('bdl').onclick = downloadFile;
+            document.getElementById('bedit').onclick = startEdit;
+            document.getElementById('bsave').onclick = () => { const ta = document.querySelector('.eta'); if (ta) doSave(ta.value); };
+            document.getElementById('bcancel').onclick = cancelEdit;
+            document.getElementById('bao').onclick = doAuth;
+            document.getElementById('bac').onclick = hideAuth;
+            document.getElementById('apw').addEventListener('keydown', e => {
+                if (e.key === 'Enter') doAuth();
+                if (e.key === 'Escape') hideAuth();
+            });
+            document.getElementById('bmo').onclick = doMkdir;
+            document.getElementById('bmc').onclick = hideMkdir;
+            document.getElementById('mdn').addEventListener('keydown', e => {
+                if (e.key === 'Enter') doMkdir();
+                if (e.key === 'Escape') hideMkdir();
+            });
+            document.getElementById('fi').addEventListener('change', e => {
+                if (e.target.files.length) uploadFiles(e.target.files);
+                e.target.value = '';
+            });
+            document.querySelectorAll('.tab-btn').forEach(b =>
+                b.addEventListener('click', () => switchArea(b.dataset.area)));
+            document.querySelectorAll('.ft th[data-sort]').forEach(th =>
+                th.addEventListener('click', () => sortBy(th.dataset.sort)));
+            document.getElementById('mauth').addEventListener('click', e => { if (e.target === e.currentTarget) hideAuth(); });
+            document.getElementById('mmkdir').addEventListener('click', e => { if (e.target === e.currentTarget) hideMkdir(); });
+
+            setupDnD();
+            await refresh();
+        });
+    </script>
+</body>
+
+</html>
